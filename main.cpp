@@ -17,7 +17,7 @@ struct Plus {
 
 int main() {
 
-    typedef myFunction<int (int, int)> iii;
+    typedef myFunction<int(int, int)> iii;
 
     iii empty;
 
@@ -41,15 +41,20 @@ int main() {
     assert(!empty);
     cout << null(3, 5) << "\n";
 
-    iii plus([](int a, int b) {return a + b;});
-    iii mul([](int a, int b) {return a * b;});
+    iii plus([](int a, int b) { return a + b; });
+    iii mul([](int a, int b) { return a * b; });
     cout << plus(4, 4) << " " << mul(4, 4) << "\n";
     plus.swap(mul);
     cout << plus(4, 4) << " " << mul(4, 4) << "\n";
 
+    Plus p = Plus();
+    myFunction<int (int, int)> fff(p);
+    std::function aou(p);
+    cout << fff(3, 10) << " " << fff(3, 10) << "\n";
 
-    myFunction fff(pluss);
+    std::function ff([](int &a, int b) { return a + b; });
+    int a = 40;
+    cout << ff(a, 10) << " " << ff(++a, 10);
 
-    std::function ff([](int a, int b) {return a + b;});
     return 0;
 }

@@ -9,6 +9,8 @@
 #include <algorithm>
 #include <memory>
 
+
+
 template<typename T>
 struct myFunction;
 
@@ -22,6 +24,7 @@ struct myFunction<Ret(Args ...)> {
 
     template<typename F>
     myFunction(F f) : ptr(new model<F>(std::move(f))) {
+        std::cerr << alignof(void*) << " " << sizeof(void*);
     }
 
     myFunction(const myFunction<Ret(Args ...)> &other) : ptr(other.ptr->copy()) {}
@@ -38,8 +41,8 @@ struct myFunction<Ret(Args ...)> {
         return *this;
     }
 
-    Ret operator()(Args ... args) {
-        return ptr->invoke(args ...);
+    Ret operator()(Args &&... args) {
+        return ptr->invoke(std::forward<Args>(args)...);
     }
 
     explicit operator bool() const noexcept {
@@ -58,29 +61,29 @@ private:
 
         virtual std::unique_ptr<concept> copy() const = 0;
 
-        virtual Ret invoke(Args ... args) = 0;
+        virtual Ret invoke(Args &&... args) = 0;
     };
 
     template<typename F>
     struct model : concept {
         explicit model(F func) : concept(), func(std::move(func)) {}
 
-        std::unique_ptr<concept> copy() const {
+        virtual std::unique_ptr<concept> copy() const {
             return std::make_unique<model<F>>(func);
         }
 
-        virtual Ret invoke(Args ... args) {
-            return func(args ...);
+        virtual Ret invoke(Args &&...args) {
+            return func(std::forward<Args>(args)...);
         }
+
 
     private:
         F func;
     };
 
 
-    //bool isSmall;
     std::unique_ptr<concept> ptr;
-    //Ret (*smallF)(Args...);
+    void *smallF = nullptr;
 };
 
 #endif //FUNCTION_MYFUNCTION_H
