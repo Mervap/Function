@@ -20,25 +20,31 @@ int main() {
     typedef myFunction<int(int, int)> iii;
 
     iii empty;
+    assert(!empty);
 
     iii null(nullptr);
+    assert(!null);
 
     //iii f([](int a, int b) {return a + b;});
     iii f(pluss);
+    assert(f);
     cout << f(1, 1) << "\n";
 
     auto copy(f);
+    assert(copy);
     cout << f(1, 1) << " " << copy(2, 2) << "\n";
 
     auto move(std::move(f));
-    assert(!f);
+    assert(move);
     cout << move(1, 2) << " " << copy(2, 3) << "\n";
 
     empty = move;
+    assert(empty);
     cout << move(1, 4) << " " << empty(4, 3) << "\n";
 
     null = std::move(empty);
-    assert(!empty);
+    assert(null);
+    //assert(!empty);
     cout << null(3, 5) << "\n";
 
     iii plus([](int a, int b) { return a + b; });
