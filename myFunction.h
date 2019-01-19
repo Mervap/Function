@@ -26,7 +26,7 @@ private:
 
         virtual Ret invoke(Args &&... args) = 0;
 
-        virtual void placementSmall(void *adr) = 0;
+        virtual void placementSmall(void *to) = 0;
     };
 
     template<typename F>

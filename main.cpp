@@ -9,6 +9,10 @@ int pluss(int a, int b) {
     return a + b;
 }
 
+int minuss(int a, int b, int c, int d, int e, int f, int l) {
+    return a - b + c - d + e - f + l;
+}
+
 struct Plus {
     int operator()(int a, int b) {
         return a + b;
@@ -25,7 +29,6 @@ int main() {
     iii null(nullptr);
     assert(!null);
 
-    //iii f([](int a, int b) {return a + b;});
     iii f(pluss);
     assert(f);
     cout << f(1, 1) << "\n";
@@ -44,7 +47,6 @@ int main() {
 
     null = std::move(empty);
     assert(null);
-    //assert(!empty);
     cout << null(3, 5) << "\n";
 
     iii plus([](int a, int b) { return a + b; });
@@ -54,13 +56,17 @@ int main() {
     cout << plus(4, 4) << " " << mul(4, 4) << "\n";
 
     Plus p = Plus();
-    myFunction<int (int, int)> fff(p);
-    std::function aou(p);
+    myFunction<int(int, int)> fff(p);
     cout << fff(3, 10) << " " << fff(3, 10) << "\n";
 
-    std::function ff([](int &a, int b) { return a + b; });
+    myFunction<int(int &, int)> ff([](int &a, int b) { return a + b; });
     int a = 40;
-    cout << ff(a, 10) << " " << ff(++a, 10);
+    cout << ff(a, 10) << " " << ff(++a, 10) << "\n";
+
+
+    typedef myFunction<int(int, int, int, int, int, int, int)> iiii;
+    iiii minn(minuss);
+    cout << minn(1, 2, 3, 4, 5, 6, 7) << "\n";
 
     return 0;
 }
