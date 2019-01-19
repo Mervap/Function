@@ -41,8 +41,8 @@ private:
             return func(std::forward<Args>(args)...);
         }
 
-        virtual void placementSmall(void *adr) {
-            new(adr) model<F>(func);
+        virtual void placementSmall(void *to) {
+            new(to) model<F>(func);
         }
 
     private:
@@ -50,7 +50,7 @@ private:
     };
 
 public:
-    myFunction() noexcept : ptr(nullptr), isSmall(false) {}
+    myFunction() noexcept {}
 
     myFunction(std::nullptr_t) noexcept : myFunction() {}
 
