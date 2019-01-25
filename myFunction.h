@@ -57,6 +57,8 @@ public:
     ~myFunction() {
         if (isSmall) {
             (reinterpret_cast<concept *>(st))->~concept();
+        } else {
+            ptr.~unique_ptr();
         }
     }
 
@@ -71,7 +73,7 @@ public:
         }
     }
 
-    myFunction(const myFunction<Ret(Args ...)> &other) {
+    myFunction(const myFunction &other) {
         if (other.isSmall) {
             ((concept *) (other.st))->placementSmall(st);
         } else {
@@ -84,6 +86,9 @@ public:
         isSmall = other.isSmall;
         if (other.isSmall) {
             ((concept *) (other.st))->placementSmall(st);
+            ((concept *) (other.st))->~concept();
+            new(&other.ptr) std::unique_ptr<concept>(nullptr);
+            other.isSmall = false;
         } else {
             ptr = std::move(other.ptr);
         }
@@ -96,11 +101,16 @@ public:
     }
 
     myFunction &operator=(myFunction &&other) noexcept {
-        if (other.isSmall) {
+        if (other.isSmall == isSmall) {
             swap(other);
+        } else if (other.isSmall) {
+            isSmall = true;
+            ptr.~unique_ptr();
+            ((concept *) (other.st))->placementSmall(st);
         } else {
-            ptr = std::move(other.ptr);
-            isSmall = other.isSmall;
+            ((concept *) (st))->~concept();
+            new(&ptr) std::unique_ptr<concept>(std::move(other.ptr));
+            isSmall = false;
         }
         return *this;
     }
@@ -113,11 +123,26 @@ public:
     }
 
     explicit operator bool() const noexcept {
-        return isSmall || ptr != nullptr;
+        return isSmall || ptr;
     }
 
     void swap(myFunction &other) noexcept {
-        std::swap(st, other.st);
+        if (other.isSmall == isSmall) {
+            std::swap(st, other.st);
+        } else if (other.isSmall) {
+            auto tmp = std::move(ptr);
+            ptr.~unique_ptr();
+            ((concept *) (other.st))->placementSmall(st);
+            ((concept *) (other.st))->~concept();
+            new(&other.ptr) std::unique_ptr<concept>(std::move(tmp));
+        } else {
+            auto tmp = std::move(other.ptr);
+            other.ptr.~unique_ptr();
+            ((concept *) (st))->placementSmall(other.st);
+            ((concept *) (st))->~concept();
+            new(&ptr) std::unique_ptr<concept>(std::move(tmp));
+        }
+
         std::swap(isSmall, other.isSmall);
     }
 

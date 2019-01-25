@@ -19,7 +19,13 @@ struct Plus {
     }
 };
 
+int f() {
+    return 5;
+}
+
 int main() {
+
+    std::forward()
 
     typedef myFunction<int(int, int)> iii;
 
