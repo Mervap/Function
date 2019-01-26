@@ -26,7 +26,9 @@ private:
 
         virtual Ret invoke(Args &&... args) = 0;
 
-        virtual void placementSmall(void *to) = 0;
+        virtual void placementSmall(void *to) const = 0;
+
+        virtual void movePlacementSmall(void *to) = 0;
     };
 
     template<typename F>
@@ -41,8 +43,12 @@ private:
             return func(std::forward<Args>(args)...);
         }
 
-        virtual void placementSmall(void *to) {
+        virtual void placementSmall(void *to) const {
             new(to) model<F>(func);
+        }
+
+        virtual void movePlacementSmall(void *to) {
+            new(to) model<F>(std::move(func));
         }
 
     private:
@@ -56,15 +62,15 @@ public:
 
     ~myFunction() {
         if (isSmall) {
-            (reinterpret_cast<concept *>(st))->~concept();
+            reinterpret_cast<concept *>(st)->~concept();
         } else {
             ptr.~unique_ptr();
         }
     }
 
     template<typename F>
-    myFunction(F f) {
-        if (sizeof(F) <= BUFF_SIZE) {
+    explicit myFunction(F f) {
+        if (sizeof(F) <= BUFF_SIZE && std::is_nothrow_move_constructible<F>::value) {
             isSmall = true;
             new(st) model<F>(std::move(f));
         } else {
@@ -75,7 +81,7 @@ public:
 
     myFunction(const myFunction &other) {
         if (other.isSmall) {
-            ((concept *) (other.st))->placementSmall(st);
+            reinterpret_cast<const concept *>(other.st)->placementSmall(st);
         } else {
             ptr = other.ptr->copy();
         }
@@ -85,8 +91,8 @@ public:
     myFunction(myFunction &&other) noexcept {
         isSmall = other.isSmall;
         if (other.isSmall) {
-            ((concept *) (other.st))->placementSmall(st);
-            ((concept *) (other.st))->~concept();
+            reinterpret_cast<concept *>(other.st)->movePlacementSmall(st);
+            reinterpret_cast<concept *>(other.st)->~concept();
             new(&other.ptr) std::unique_ptr<concept>(nullptr);
             other.isSmall = false;
         } else {
@@ -101,16 +107,21 @@ public:
     }
 
     myFunction &operator=(myFunction &&other) noexcept {
-        if (other.isSmall == isSmall) {
-            swap(other);
-        } else if (other.isSmall) {
-            isSmall = true;
-            ptr.~unique_ptr();
-            ((concept *) (other.st))->placementSmall(st);
+        if (isSmall) {
+            reinterpret_cast<concept *>(st)->~concept();
         } else {
-            ((concept *) (st))->~concept();
+            ptr.~unique_ptr();
+        }
+
+        isSmall = other.isSmall;
+
+        if (other.isSmall) {
+            reinterpret_cast<concept *>(other.st)->movePlacementSmall(st);
+            reinterpret_cast<concept *>(other.st)->~concept();
+            new(&other.ptr) std::unique_ptr<concept>(nullptr);
+            other.isSmall = false;
+        } else {
             new(&ptr) std::unique_ptr<concept>(std::move(other.ptr));
-            isSmall = false;
         }
         return *this;
     }
@@ -128,18 +139,22 @@ public:
 
     void swap(myFunction &other) noexcept {
         if (other.isSmall == isSmall) {
-            std::swap(st, other.st);
+            if (isSmall) {
+                std::swap(st, other.st);
+            } else {
+                std::swap(ptr, other.ptr);
+            }
         } else if (other.isSmall) {
             auto tmp = std::move(ptr);
             ptr.~unique_ptr();
-            ((concept *) (other.st))->placementSmall(st);
-            ((concept *) (other.st))->~concept();
+            reinterpret_cast<concept *>(other.st)->movePlacementSmall(st);
+            reinterpret_cast<concept *>(other.st)->~concept();
             new(&other.ptr) std::unique_ptr<concept>(std::move(tmp));
         } else {
             auto tmp = std::move(other.ptr);
             other.ptr.~unique_ptr();
-            ((concept *) (st))->placementSmall(other.st);
-            ((concept *) (st))->~concept();
+            reinterpret_cast<concept *>(st)->movePlacementSmall(other.st);
+            reinterpret_cast<concept *>(st)->~concept();
             new(&ptr) std::unique_ptr<concept>(std::move(tmp));
         }
 
