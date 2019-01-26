@@ -26,9 +26,9 @@ private:
 
         virtual Ret invoke(Args &&... args) = 0;
 
-        virtual void placementSmall(void *to) const = 0;
+        virtual void placementSmall(char *to) const = 0;
 
-        virtual void movePlacementSmall(void *to) = 0;
+        virtual void movePlacementSmall(char *to) = 0;
     };
 
     template<typename F>
@@ -43,11 +43,11 @@ private:
             return func(std::forward<Args>(args)...);
         }
 
-        virtual void placementSmall(void *to) const {
+        virtual void placementSmall(char *to) const {
             new(to) model<F>(func);
         }
 
-        virtual void movePlacementSmall(void *to) {
+        virtual void movePlacementSmall(char *to) {
             new(to) model<F>(std::move(func));
         }
 
