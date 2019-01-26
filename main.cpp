@@ -3,6 +3,8 @@
 #include <functional>
 #include "myFunction.h"
 
+#include <xmmintrin.h>
+
 using namespace std;
 
 //Small obj
@@ -60,6 +62,18 @@ struct Minus {
 int f() {
     return 5;
 }
+
+struct sse_func
+{
+    sse_func()
+        : data()
+    {}
+
+    void operator()() const
+    {}
+
+    __m128 data;
+};
 
 int main() {
     typedef myFunction<int(int, int)> iii;
@@ -141,6 +155,10 @@ int main() {
     assert(fp3);
     assert(!fp1);
     cout << fp3(1, 1) << "\n", assert(fp3(1, 1) == 0 && !fp1);
+
+    myFunction<void ()> f1((sse_func()));
+
+    f1();
 
     return 0;
 }
