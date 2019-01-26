@@ -59,21 +59,40 @@ struct Minus {
     }
 };
 
-int f() {
-    return 5;
-}
 
-struct sse_func
-{
+struct sse_func {
     sse_func()
-        : data()
-    {}
+            : data() {}
 
-    void operator()() const
-    {}
+    void operator()() const {}
 
     __m128 data;
 };
+
+template<typename T, typename ... Args>
+std::unique_ptr<T> make_uniquee(Args &&... args) {
+    return unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+struct stringHolder {
+
+    stringHolder(const string &a) : a(a) {}
+
+    std::string a;
+};
+
+
+template<typename F>
+F&& max(F &&arg) {
+    return std::forward<F>(arg);
+}
+
+template<typename F, typename ... T>
+decltype(auto) max(F &&f, T &&... args) {
+    auto tmp = max(std::forward<T>(args)...);
+    return f > tmp ? std::forward<F>(f) : std::move(tmp);
+}
+
 
 int main() {
     typedef myFunction<int(int, int)> iii;
@@ -156,9 +175,19 @@ int main() {
     assert(!fp1);
     cout << fp3(1, 1) << "\n", assert(fp3(1, 1) == 0 && !fp1);
 
-    myFunction<void ()> f1((sse_func()));
+    std::cout << alignof(__m128) << " " << sizeof(__m128) << std::endl;
+    myFunction<void()> f1((sse_func()));
 
     f1();
 
+    const string s("Alala");
+    cout << s << "\n";
+    auto po = make_uniquee<stringHolder>(s);
+    cout << s << "\n";
+    cout << (*po).a << "\n";
+
+    int yy = 5;
+    cout << max(yy) << "\n";
+    cout << max(1, 2.0, 3.5f, -10ll);
     return 0;
 }

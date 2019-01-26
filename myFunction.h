@@ -10,7 +10,7 @@
 #include <memory>
 
 const size_t BUFF_SIZE = 16;
-const size_t BUFF_ALIGN = 32;
+const size_t BUFF_ALIGN = 16;
 
 template<typename T>
 struct myFunction;
@@ -71,7 +71,7 @@ public:
 
     template<typename F>
     myFunction(F f) {
-        if (sizeof(F) <= BUFF_SIZE && std::is_nothrow_move_constructible<F>::value) {
+        if constexpr (sizeof(model<F>) <= BUFF_SIZE && alignof(F) <= BUFF_ALIGN && std::is_nothrow_move_constructible<F>::value) {
             isSmall = true;
             new(&st) model<F>(std::move(f));
         } else {
@@ -163,6 +163,7 @@ public:
     }
 
 
+private:
     union {
         std::unique_ptr<concept> ptr = nullptr;
         std::aligned_storage<BUFF_SIZE, BUFF_ALIGN>::type st;
